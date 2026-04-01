@@ -1,5 +1,7 @@
 # local-stellar-neighborhood
 
+<img width="1728" height="1277" alt="Screenshot 2026-04-01 at 9 34 30 AM" src="https://github.com/user-attachments/assets/cf170e40-9775-43c6-9d0e-2b04f53015d5" />
+
 Interactive **3D visualization** of the [AT-HYG v3.3](https://codeberg.org/astronexus/athyg) star catalog (~2.5M stars) using **Three.js**. Positions use catalog Cartesian coordinates (parsecs); colors derive from B–V color index.
 
 ## Setup
