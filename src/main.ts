@@ -7,8 +7,8 @@ import { createSolOpaqueDisc } from "./sol-disc.js";
 import { createInfoPanel } from "./ui/info-panel.js";
 import { createLoadingOverlay } from "./ui/loading.js";
 
-const DATA_BIN = "/data/stars.bin";
-const DATA_NAMES = "/data/named-stars.json";
+const DATA_BIN = `${import.meta.env.BASE_URL}data/stars.bin`;
+const DATA_NAMES = `${import.meta.env.BASE_URL}data/named-stars.json`;
 
 /** Stop zooming in once Sol’s sprite reaches this fraction of the shorter viewport side */
 const SOL_SCREEN_FILL = 0.92;
