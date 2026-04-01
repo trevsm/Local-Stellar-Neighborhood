@@ -1,4 +1,4 @@
-# star-system-model
+# local-stellar-neighborhood
 
 Interactive **3D visualization** of the [AT-HYG v3.3](https://codeberg.org/astronexus/athyg) star catalog (~2.5M stars) using **Three.js**. Positions use catalog Cartesian coordinates (parsecs); colors derive from B–V color index.
 
