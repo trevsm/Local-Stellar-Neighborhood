@@ -23,7 +23,7 @@ export function createCamera(container: HTMLElement): PerspectiveCamera {
   const aspect = container.clientWidth / Math.max(container.clientHeight, 1);
   // Near plane in parsecs — small enough to dolly right up to Sol at origin without clipping
   const camera = new PerspectiveCamera(60, aspect, 1e-6, 1e9);
-  camera.position.set(0, 80, 400);
+  camera.position.set(0, 58, 290);
   camera.lookAt(0, 0, 0);
   return camera;
 }

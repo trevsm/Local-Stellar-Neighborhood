@@ -11,6 +11,7 @@ uniform float magLimit;  // apparent mag where stars vanish
 
 varying vec3 vColor;
 varying float vIntensity;
+varying float vPointSize;
 
 const float INV_LN10 = 0.4342944819; // 1 / ln(10)
 
@@ -29,6 +30,7 @@ void main() {
   if (t < 0.001) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     gl_PointSize = 0.0;
+    vPointSize = 0.0;
     vIntensity = 0.0;
     vColor = vec3(0.0);
     return;
@@ -52,6 +54,7 @@ void main() {
 
   gl_PointSize = pixelRatio * (baseSize + bloom) * nearBoost;
   gl_PointSize = clamp(gl_PointSize, 0.5, 600.0);
+  vPointSize = gl_PointSize;
 
   gl_Position = projectionMatrix * mvPosition;
 }

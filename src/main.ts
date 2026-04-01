@@ -3,6 +3,7 @@ import { createCamera, createRenderer, createScene, onResize } from "./scene.js"
 import { createStarPoints, MAG_BRIGHT, MAG_LIMIT, updateStarPixelRatio } from "./stars.js";
 import { loadNamedStars, loadStarBinary } from "./utils/data-loader.js";
 import { minDistanceBeforeSolOverfillsViewport } from "./utils/solZoom.js";
+import { createSolOpaqueDisc } from "./sol-disc.js";
 import { createInfoPanel } from "./ui/info-panel.js";
 import { createLoadingOverlay } from "./ui/loading.js";
 
@@ -59,6 +60,9 @@ async function main(): Promise<void> {
   const { points, material } = createStarPoints(starData, pixelRatio);
   scene.add(points);
 
+  const solDisc = createSolOpaqueDisc(camera, renderer);
+  scene.add(solDisc.mesh);
+
   window.addEventListener("resize", () => {
     onResize(app, camera, renderer);
     updateStarPixelRatio(material, Math.min(window.devicePixelRatio, 2));
@@ -99,6 +103,7 @@ async function main(): Promise<void> {
     }
 
     controls.update();
+    solDisc.update();
     info.tick();
     renderer.render(scene, camera);
   }
