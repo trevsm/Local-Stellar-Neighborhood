@@ -7,10 +7,15 @@ export function createLoadingOverlay(): {
   root.style.cssText = `
     position: fixed;
     inset: 0;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
     background: #020204;
     color: #c8d0e0;
     font-family: ui-sans-serif, system-ui, sans-serif;
@@ -20,14 +25,14 @@ export function createLoadingOverlay(): {
 
   const title = document.createElement("div");
   title.textContent = "Loading AT-HYG star catalog…";
-  title.style.fontSize = "1.1rem";
+  title.style.fontSize = "clamp(1rem, 2.5vw, 1.25rem)";
   title.style.letterSpacing = "0.04em";
 
   const barWrap = document.createElement("div");
   barWrap.style.cssText = `
-    width: min(360px, 80vw);
-    height: 6px;
-    border-radius: 3px;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
     background: #1a1f2e;
     overflow: hidden;
   `;
@@ -42,7 +47,7 @@ export function createLoadingOverlay(): {
   barWrap.appendChild(bar);
 
   const status = document.createElement("div");
-  status.style.fontSize = "0.8rem";
+  status.style.fontSize = "clamp(0.8rem, 1.5vw, 0.95rem)";
   status.style.opacity = "0.75";
   status.textContent = "Starting download…";
 
