@@ -1,4 +1,6 @@
-# local-stellar-neighborhood
+# Local Stellar Neighborhood
+
+**Live site:** [trevsm.github.io/Local-Stellar-Neighborhood](https://trevsm.github.io/Local-Stellar-Neighborhood/)
 
 <img width="1728" height="1277" alt="Screenshot 2026-04-01 at 9 34 30 AM" src="https://github.com/user-attachments/assets/cf170e40-9775-43c6-9d0e-2b04f53015d5" />
 
@@ -35,7 +37,8 @@ Open the URL shown (default `http://localhost:5173`). **Drag** to orbit, **scrol
 
 ```bash
 npm run build
-npm run preview   # optional production preview
+npm run preview   # optional production preview (root base; fine for quick checks)
+npm run preview:pages   # build with /Local-Stellar-Neighborhood/ base, then preview (matches GitHub Pages)
 ```
 
 ## License

@@ -1,6 +1,11 @@
 import { defineConfig } from "vite";
 
-/** Project Pages URL is /<repo>/; set automatically in GitHub Actions. */
+/**
+ * GitHub Pages serves at https://<user>.github.io/<repo>/ — Vite `base` must match.
+ * In CI, `GITHUB_REPOSITORY` is set to `owner/Local-Stellar-Neighborhood`.
+ * Locally, default `/` keeps `npm run dev` correct; use `npm run preview:pages` to
+ * build with the same base as production.
+ */
 const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1];
 const base = repoName ? `/${repoName}/` : "/";
 

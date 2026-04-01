@@ -1,12 +1,14 @@
 {
   "name": "local-stellar-neighborhood",
   "private": true,
+  "homepage": "https://trevsm.github.io/Local-Stellar-Neighborhood/",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "preview:pages": "GITHUB_REPOSITORY=trevsm/Local-Stellar-Neighborhood npm run build && vite preview",
     "prepare-data": "tsx scripts/prepare-data.ts"
   },
   "dependencies": {
