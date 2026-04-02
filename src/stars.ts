@@ -2,9 +2,12 @@ import {
   AdditiveBlending,
   BufferGeometry,
   Float32BufferAttribute,
+  PerspectiveCamera,
   Points,
   ShaderMaterial,
+  Vector2,
   Vector3,
+  WebGLRenderer,
 } from "three";
 import type { StarBuffers } from "./utils/data-loader.js";
 import starVert from "./shaders/star.vert.glsl?raw";
@@ -60,6 +63,8 @@ export function createStarPoints(
       magBright: { value: MAG_BRIGHT },
       magLimit: { value: MAG_LIMIT },
       pixelRatio: { value: pixelRatio },
+      viewportHeight: { value: 1 },
+      tanHalfFov: { value: 1 },
     },
     vertexShader: starVert,
     fragmentShader: starFrag,
@@ -79,6 +84,22 @@ export function updateStarPixelRatio(
   pixelRatio: number,
 ): void {
   material.uniforms.pixelRatio!.value = pixelRatio;
+}
+
+const _bufSize = new Vector2();
+
+/**
+ * Perspective-correct angular sizing needs viewport height (drawing-buffer px) and tan(fov/2).
+ * Call each frame (or on resize) so star discs track zoom without hitting artificial size caps.
+ */
+export function updateStarPointSizeUniforms(
+  material: ShaderMaterial,
+  camera: PerspectiveCamera,
+  renderer: WebGLRenderer,
+): void {
+  renderer.getDrawingBufferSize(_bufSize);
+  material.uniforms.viewportHeight!.value = _bufSize.y;
+  material.uniforms.tanHalfFov!.value = Math.tan((camera.fov * Math.PI) / 360);
 }
 
 /** Distance from infinite ray to point in world space */

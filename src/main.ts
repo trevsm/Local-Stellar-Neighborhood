@@ -1,7 +1,11 @@
 import { Group, Vector3 } from "three";
 import { createOrbitControls } from "./controls.js";
 import { createCamera, createRenderer, createScene, onResize } from "./scene.js";
-import { createStarPoints, updateStarPixelRatio } from "./stars.js";
+import {
+  createStarPoints,
+  updateStarPixelRatio,
+  updateStarPointSizeUniforms,
+} from "./stars.js";
 import {
   loadNamedStars,
   loadStarBinary,
@@ -86,6 +90,7 @@ async function main(): Promise<void> {
 
   const pixelRatio = Math.min(window.devicePixelRatio, 2);
   const { points, material } = createStarPoints(starData, pixelRatio);
+  updateStarPointSizeUniforms(material, camera, renderer);
   originGroup.add(points);
 
   const popularStars = selectPopularNamedStars(named.named);
@@ -97,6 +102,7 @@ async function main(): Promise<void> {
   window.addEventListener("resize", () => {
     onResize(app, camera, renderer);
     updateStarPixelRatio(material, Math.min(window.devicePixelRatio, 2));
+    updateStarPointSizeUniforms(material, camera, renderer);
   });
 
   function onPointerPick(clientX: number, clientY: number): void {
@@ -116,6 +122,7 @@ async function main(): Promise<void> {
     requestAnimationFrame(animate);
 
     controls.update();
+    updateStarPointSizeUniforms(material, camera, renderer);
     info.tick();
     renderer.render(scene, camera);
   }

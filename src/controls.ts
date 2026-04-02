@@ -8,8 +8,10 @@ export function createOrbitControls(
   const controls = new OrbitControls(camera, domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  // World units are parsecs; Sol is at origin — allow zooming arbitrarily close (no 1 pc floor).
-  controls.minDistance = 0;
+  // World units are parsecs. Visual star radius is ~1.5e-4 pc; stop outside
+  // so the star fills much of the screen at closest zoom without the camera
+  // passing through the disc.
+  controls.minDistance = 4e-4;
   controls.maxDistance = 5e8;
   controls.rotateSpeed = 0.35;
   // Faster dolly so you can reach “inside the Solar System” zoom in reasonable time

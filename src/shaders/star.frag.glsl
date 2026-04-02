@@ -42,8 +42,8 @@ void main() {
   // Fade out before the point-sprite edge so the circular billboard boundary never shows
   sphereProfile *= 1.0 - smoothstep(0.26, 0.31, r);
 
-  // --- Blend based on point size ---
-  float sphereT = smoothstep(40.0, 150.0, vPointSize);
+  // --- Blend PSF → sphere as sprite grows ---
+  float sphereT = smoothstep(20.0, 80.0, vPointSize);
   float profile = mix(psfProfile, sphereProfile, sphereT);
 
   float brightness = profile * vIntensity;
