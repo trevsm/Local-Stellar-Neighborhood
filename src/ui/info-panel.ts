@@ -395,6 +395,14 @@ export function createInfoPanel(
 
   function setNamedData(data: NamedStarsPayload): void {
     namedPayload = data;
+
+    const realSol = data.named.find((s) => s.name === "Sol");
+    if (realSol) {
+      solEntry.x = realSol.x;
+      solEntry.y = realSol.y;
+      solEntry.z = realSol.z;
+    }
+
     sortedNamed = [...data.named].sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );

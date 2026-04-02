@@ -15,6 +15,7 @@ import {
   createStarLabelBillboards,
   selectPopularNamedStars,
 } from "./star-labels.js";
+import { createSolPlanets } from "./planets.js";
 import { createInfoPanel } from "./ui/info-panel.js";
 import { createLoadingOverlay } from "./ui/loading.js";
 
@@ -93,6 +94,24 @@ async function main(): Promise<void> {
   updateStarPointSizeUniforms(material, camera, renderer);
   originGroup.add(points);
 
+  const solInCatalog = named.named.find((s) => s.name === "Sol");
+  const solPos = solInCatalog ?? { x: 0, y: 0, z: 0 };
+
+  // Center the initial view on Sol's actual catalog position (may differ
+  // slightly from the coordinate origin due to catalog precision).
+  if (solPos.x !== 0 || solPos.y !== 0 || solPos.z !== 0) {
+    originCatalog.set(solPos.x, solPos.y, solPos.z);
+    originGroup.position.set(-solPos.x, -solPos.y, -solPos.z);
+    camera.position.x -= solPos.x;
+    camera.position.y -= solPos.y;
+    camera.position.z -= solPos.z;
+    controls.target.set(0, 0, 0);
+    controls.update();
+  }
+
+  const solPlanets = createSolPlanets(originCatalog, solPos);
+  originGroup.add(solPlanets.group);
+
   const popularStars = selectPopularNamedStars(named.named);
   const { group: labelBillboards } = createStarLabelBillboards(popularStars);
   labelBillboards.visible = false;
@@ -123,6 +142,7 @@ async function main(): Promise<void> {
 
     controls.update();
     updateStarPointSizeUniforms(material, camera, renderer);
+    solPlanets.update(camera);
     info.tick();
     renderer.render(scene, camera);
   }

@@ -18,10 +18,11 @@ varying float vPointSize;
 const float INV_LN10 = 0.4342944819; // 1 / ln(10)
 /**
  * Exaggerated visual radius (parsecs) so stars resolve into discs at close zoom.
- * True R☉ ≈ 2.3e-8 pc, which is invisible at any catalog distance. ~1.5e-4 pc (~30 AU)
- * keeps stars as points beyond ~0.1 pc but lets them grow into discs as you zoom in.
+ * True R☉ ≈ 2.3e-8 pc, which is invisible at any catalog distance. 1e-6 pc (~0.2 AU)
+ * keeps stars as magnitude-driven points at interstellar range but lets them grow
+ * into small discs when zoomed in, without overwhelming planetary orbits.
  */
-const float VISUAL_RADIUS_PC = 1.5e-4;
+const float VISUAL_RADIUS_PC = 1.0e-6;
 
 void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
