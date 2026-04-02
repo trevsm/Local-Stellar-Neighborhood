@@ -1,18 +1,21 @@
 import { Group, Vector3 } from "three";
 import { createOrbitControls } from "./controls.js";
 import { createCamera, createRenderer, createScene, onResize } from "./scene.js";
-import { createStarPoints, MAG_BRIGHT, MAG_LIMIT, updateStarPixelRatio } from "./stars.js";
-import { loadNamedStars, loadStarBinary } from "./utils/data-loader.js";
-import { minDistanceBeforeSolOverfillsViewport } from "./utils/solZoom.js";
-import { createSolOpaqueDisc } from "./sol-disc.js";
+import { createStarPoints, updateStarPixelRatio } from "./stars.js";
+import {
+  loadNamedStars,
+  loadStarBinary,
+  type NamedStarsPayload,
+} from "./utils/data-loader.js";
+import {
+  createStarLabelBillboards,
+  selectPopularNamedStars,
+} from "./star-labels.js";
 import { createInfoPanel } from "./ui/info-panel.js";
 import { createLoadingOverlay } from "./ui/loading.js";
 
 const DATA_BIN = `${import.meta.env.BASE_URL}data/stars.bin`;
 const DATA_NAMES = `${import.meta.env.BASE_URL}data/named-stars.json`;
-
-/** Stop zooming in once Sol’s sprite reaches this fraction of the shorter viewport side */
-const SOL_SCREEN_FILL = 0.92;
 
 async function main(): Promise<void> {
   const app = document.getElementById("app");
@@ -30,6 +33,8 @@ async function main(): Promise<void> {
   const originGroup = new Group();
   scene.add(originGroup);
 
+  let popularLabelGroup: Group | null = null;
+
   const info = createInfoPanel(camera, app, {
     getOriginCatalog: () => originCatalog,
     onOriginSet: (x, y, z) => {
@@ -44,12 +49,16 @@ async function main(): Promise<void> {
       controls.target.set(0, 0, 0);
       controls.update();
     },
+    onPopularLabelsChange: (visible) => {
+      if (popularLabelGroup) popularLabelGroup.visible = visible;
+    },
   });
 
   let starData;
+  let named: NamedStarsPayload;
   try {
     starData = await loadStarBinary(DATA_BIN, loading.setProgress);
-    const named = await loadNamedStars(DATA_NAMES);
+    named = await loadNamedStars(DATA_NAMES);
     info.setStarCount(starData.count);
     info.setNamedData(named);
   } catch (e) {
@@ -79,8 +88,11 @@ async function main(): Promise<void> {
   const { points, material } = createStarPoints(starData, pixelRatio);
   originGroup.add(points);
 
-  const solDisc = createSolOpaqueDisc(camera, renderer);
-  originGroup.add(solDisc.mesh);
+  const popularStars = selectPopularNamedStars(named.named);
+  const { group: labelBillboards } = createStarLabelBillboards(popularStars);
+  labelBillboards.visible = false;
+  popularLabelGroup = labelBillboards;
+  originGroup.add(labelBillboards);
 
   window.addEventListener("resize", () => {
     onResize(app, camera, renderer);
@@ -103,26 +115,7 @@ async function main(): Promise<void> {
   function animate(): void {
     requestAnimationFrame(animate);
 
-    const pr = Math.min(window.devicePixelRatio, 2);
-    const w = renderer.domElement.clientWidth;
-    const h = renderer.domElement.clientHeight;
-
-    // Orbit target at Sol: cap zoom so the Sun sprite cannot grow past ~full screen
-    if (controls.target.lengthSq() < 1e-12) {
-      controls.minDistance = minDistanceBeforeSolOverfillsViewport(
-        w,
-        h,
-        pr,
-        MAG_BRIGHT,
-        MAG_LIMIT,
-        SOL_SCREEN_FILL,
-      );
-    } else {
-      controls.minDistance = 0;
-    }
-
     controls.update();
-    solDisc.update();
     info.tick();
     renderer.render(scene, camera);
   }

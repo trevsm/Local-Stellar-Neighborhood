@@ -32,6 +32,7 @@ export function createInfoPanel(
   options: {
     getOriginCatalog: () => Vector3;
     onOriginSet: (x: number, y: number, z: number) => void;
+    onPopularLabelsChange?: (visible: boolean) => void;
   },
 ): {
   root: HTMLDivElement;
@@ -145,19 +146,74 @@ export function createInfoPanel(
   originBox.appendChild(searchInput);
   originBox.appendChild(listWrap);
 
+  if (options.onPopularLabelsChange) {
+    const labelsRow = document.createElement("div");
+    labelsRow.style.cssText = `
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      opacity: 0.95;
+    `;
+    const labelToggle = document.createElement("input");
+    labelToggle.type = "checkbox";
+    labelToggle.id = "popular-stars-toggle";
+    labelToggle.addEventListener("change", () => {
+      options.onPopularLabelsChange?.(labelToggle.checked);
+    });
+    const labelToggleLabel = document.createElement("label");
+    labelToggleLabel.htmlFor = "popular-stars-toggle";
+    labelToggleLabel.style.cursor = "pointer";
+    labelToggleLabel.textContent = "Show popular stars";
+    labelsRow.appendChild(labelToggle);
+    labelsRow.appendChild(labelToggleLabel);
+    originBox.appendChild(labelsRow);
+  }
+
   const hint = document.createElement("div");
   hint.style.marginTop = "8px";
   hint.style.fontSize = "11px";
   hint.style.opacity = "0.7";
   hint.textContent =
-    "Drag to orbit · Scroll to zoom · Click sky to identify named stars";
+    "Drag to orbit · Scroll to zoom · Click sky to identify named stars · Optional name labels · " +
+      "When AT-HYG gives two stars the same xyz (common for close binaries), they are drawn slightly apart for visibility, not to true separation.";
 
   const pickBox = document.createElement("div");
   pickBox.style.marginTop = "10px";
   pickBox.style.paddingTop = "8px";
   pickBox.style.borderTop = "1px solid rgba(120,140,180,0.2)";
   pickBox.style.display = "none";
-  pickBox.style.whiteSpace = "pre-wrap";
+  pickBox.style.pointerEvents = "auto";
+
+  const pickText = document.createElement("div");
+  pickText.style.whiteSpace = "pre-wrap";
+
+  const setOriginBtn = document.createElement("button");
+  setOriginBtn.type = "button";
+  setOriginBtn.textContent = "Set as origin";
+  setOriginBtn.style.cssText = `
+    margin-top: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(120, 140, 180, 0.45);
+    background: rgba(40, 70, 130, 0.45);
+    color: #e8eef8;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+  `;
+  setOriginBtn.addEventListener("mouseenter", () => {
+    setOriginBtn.style.background = "rgba(60, 100, 180, 0.55)";
+  });
+  setOriginBtn.addEventListener("mouseleave", () => {
+    setOriginBtn.style.background = "rgba(40, 70, 130, 0.45)";
+  });
+
+  pickBox.appendChild(pickText);
+  pickBox.appendChild(setOriginBtn);
 
   root.appendChild(title);
   root.appendChild(starsLine);
@@ -175,6 +231,7 @@ export function createInfoPanel(
   const rayOrigin = new Vec3();
   const rayDir = new Vec3();
   const starPos = new Vec3();
+  let pickedStar: NamedEntry | null = null;
 
   const solEntry: NamedEntry = {
     id: -1,
@@ -193,6 +250,10 @@ export function createInfoPanel(
     originLine.textContent = `Origin: ${star.name}`;
     options.onOriginSet(star.x, star.y, star.z);
   }
+
+  setOriginBtn.addEventListener("click", () => {
+    if (pickedStar) applyOrigin(pickedStar);
+  });
 
   function renderList(filter: string): void {
     const q = filter.trim().toLowerCase();
@@ -274,8 +335,9 @@ export function createInfoPanel(
   }
 
   function clearPick(): void {
+    pickedStar = null;
     pickBox.style.display = "none";
-    pickBox.textContent = "";
+    pickText.textContent = "";
   }
 
   function pickNamedStar(
@@ -310,9 +372,10 @@ export function createInfoPanel(
     }
 
     if (best) {
+      pickedStar = best;
       pickBox.style.display = "block";
       const spect = best.spect ? `\nSpectral type: ${best.spect}` : "";
-      pickBox.textContent = `${best.name}\nV magnitude: ${best.mag.toFixed(2)}\nDistance: ${best.dist.toFixed(2)} pc${spect}`;
+      pickText.textContent = `${best.name}\nV magnitude: ${best.mag.toFixed(2)}\nDistance: ${best.dist.toFixed(2)} pc${spect}`;
     } else {
       clearPick();
     }

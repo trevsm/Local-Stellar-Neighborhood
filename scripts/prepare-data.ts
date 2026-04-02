@@ -163,6 +163,8 @@ async function main(): Promise<void> {
 
   let index = 0;
   let columnNames: string[] | null = null;
+  /** Count rows sharing identical (x0,y0,z0) so we can separate them visually. */
+  const positionDupCounts = new Map<string, number>();
 
   function processRow(row: Record<string, string>, dupHeader: boolean): void {
     if (!columnNames) {
@@ -176,13 +178,33 @@ async function main(): Promise<void> {
     const mag = parseNum(row.mag);
     if (x0 == null || y0 == null || z0 == null || mag == null) return;
 
+    const posKey = `${x0.toFixed(9)},${y0.toFixed(9)},${z0.toFixed(9)}`;
+    const dupIdx = positionDupCounts.get(posKey) ?? 0;
+    positionDupCounts.set(posKey, dupIdx + 1);
+
+    /**
+     * AT-HYG often gives binary components the same barycentric xyz (angular separation is
+     * below parsec precision). Without a nudge, two Points overlap and read as one star.
+     */
+    let x = x0;
+    let y = y0;
+    let z = z0;
+    if (dupIdx > 0) {
+      const sepPc = 4e-4; // ~82 AU — order of magnitude for Alpha Cen A/B
+      const theta = dupIdx * 2.39996322972865332;
+      const radius = sepPc * dupIdx;
+      x = x0 + radius * Math.cos(theta);
+      y = y0 + radius * Math.sin(theta);
+      z = z0 + sepPc * 0.35 * Math.sin(dupIdx * 1.618);
+    }
+
     const ci = parseNum(row.ci);
     const [r, g, b] = bvToRgbBytes(ci ?? undefined);
 
     const i = index * 3;
-    positions[i] = x0;
-    positions[i + 1] = y0;
-    positions[i + 2] = z0;
+    positions[i] = x;
+    positions[i + 1] = y;
+    positions[i + 2] = z;
     colors[i] = r;
     colors[i + 1] = g;
     colors[i + 2] = b;
@@ -202,9 +224,9 @@ async function main(): Promise<void> {
     const spect = (row.spect ?? "").trim();
     const base = {
       id,
-      x: x0,
-      y: y0,
-      z: z0,
+      x,
+      y,
+      z,
       mag,
       dist,
       spect,
