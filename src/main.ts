@@ -1,3 +1,4 @@
+import { Group, Vector3 } from "three";
 import { createOrbitControls } from "./controls.js";
 import { createCamera, createRenderer, createScene, onResize } from "./scene.js";
 import { createStarPoints, MAG_BRIGHT, MAG_LIMIT, updateStarPixelRatio } from "./stars.js";
@@ -25,7 +26,25 @@ async function main(): Promise<void> {
   const renderer = createRenderer(app);
   const controls = createOrbitControls(camera, renderer.domElement);
 
-  const info = createInfoPanel(camera, app);
+  const originCatalog = new Vector3(0, 0, 0);
+  const originGroup = new Group();
+  scene.add(originGroup);
+
+  const info = createInfoPanel(camera, app, {
+    getOriginCatalog: () => originCatalog,
+    onOriginSet: (x, y, z) => {
+      const dx = x - originCatalog.x;
+      const dy = y - originCatalog.y;
+      const dz = z - originCatalog.z;
+      originCatalog.set(x, y, z);
+      originGroup.position.set(-x, -y, -z);
+      camera.position.x -= dx;
+      camera.position.y -= dy;
+      camera.position.z -= dz;
+      controls.target.set(0, 0, 0);
+      controls.update();
+    },
+  });
 
   let starData;
   try {
@@ -58,10 +77,10 @@ async function main(): Promise<void> {
 
   const pixelRatio = Math.min(window.devicePixelRatio, 2);
   const { points, material } = createStarPoints(starData, pixelRatio);
-  scene.add(points);
+  originGroup.add(points);
 
   const solDisc = createSolOpaqueDisc(camera, renderer);
-  scene.add(solDisc.mesh);
+  originGroup.add(solDisc.mesh);
 
   window.addEventListener("resize", () => {
     onResize(app, camera, renderer);

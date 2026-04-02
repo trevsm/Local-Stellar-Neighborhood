@@ -12,6 +12,7 @@ import { parse } from "csv-parse";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bvToRgbBytes } from "../src/utils/color.ts";
+import { conToGenitive } from "./constellation-genitive.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -34,6 +35,8 @@ const MAX_STARS = 3_000_000;
 type NamedStar = {
   id: number;
   name: string;
+  /** Extra searchable labels (e.g. Bayer designation when `name` is a proper name). */
+  aliases?: string[];
   x: number;
   y: number;
   z: number;
@@ -186,20 +189,38 @@ async function main(): Promise<void> {
     magnitudes[index] = mag;
 
     const proper = (row.proper ?? "").trim();
+    const bayer = (row.bayer ?? "").trim();
+    const con = (row.con ?? "").trim();
+    const genitive = con ? conToGenitive(con) : undefined;
+    const bayerDesignation =
+      bayer.length > 0 && genitive
+        ? `${bayer} ${genitive}`
+        : undefined;
+
+    const id = parseNum(row.id) ?? index;
+    const dist = parseNum(row.dist) ?? 0;
+    const spect = (row.spect ?? "").trim();
+    const base = {
+      id,
+      x: x0,
+      y: y0,
+      z: z0,
+      mag,
+      dist,
+      spect,
+    };
+
     if (proper.length > 0) {
-      const id = parseNum(row.id);
-      const dist = parseNum(row.dist) ?? 0;
-      const spect = (row.spect ?? "").trim();
-      named.push({
-        id: id ?? index,
-        name: proper,
-        x: x0,
-        y: y0,
-        z: z0,
-        mag,
-        dist,
-        spect,
-      });
+      const entry: NamedStar = { ...base, name: proper };
+      if (
+        bayerDesignation &&
+        bayerDesignation.toLowerCase() !== proper.toLowerCase()
+      ) {
+        entry.aliases = [bayerDesignation];
+      }
+      named.push(entry);
+    } else if (bayerDesignation) {
+      named.push({ ...base, name: bayerDesignation });
     }
 
     index += 1;

@@ -114,6 +114,7 @@ export type NamedStarsPayload = {
   named: Array<{
     id: number;
     name: string;
+    aliases?: string[];
     x: number;
     y: number;
     z: number;
