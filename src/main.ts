@@ -113,7 +113,8 @@ async function main(): Promise<void> {
   originGroup.add(solPlanets.group);
 
   const popularStars = selectPopularNamedStars(named.named);
-  const { group: labelBillboards } = createStarLabelBillboards(popularStars);
+  const { group: labelBillboards, update: updateLabelBillboards } =
+    createStarLabelBillboards(popularStars);
   labelBillboards.visible = false;
   popularLabelGroup = labelBillboards;
   originGroup.add(labelBillboards);
@@ -143,6 +144,7 @@ async function main(): Promise<void> {
     controls.update();
     updateStarPointSizeUniforms(material, camera, renderer);
     solPlanets.update(camera);
+    updateLabelBillboards(camera);
     info.tick();
     renderer.render(scene, camera);
   }
