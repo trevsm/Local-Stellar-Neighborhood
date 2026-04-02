@@ -7,20 +7,37 @@ import {
   updateStarPointSizeUniforms,
 } from "./stars.js";
 import {
+  loadExoplanets,
   loadNamedStars,
   loadStarBinary,
+  type ExoplanetsPayload,
   type NamedStarsPayload,
 } from "./utils/data-loader.js";
 import {
   createStarLabelBillboards,
   selectPopularNamedStars,
 } from "./star-labels.js";
-import { createSolPlanets } from "./planets.js";
+import {
+  createPlanetSystem,
+  FALLBACK_SOL_PLANET_DEFS,
+  type PlanetDef,
+} from "./planets.js";
 import { createInfoPanel } from "./ui/info-panel.js";
 import { createLoadingOverlay } from "./ui/loading.js";
 
 const DATA_BIN = `${import.meta.env.BASE_URL}data/stars.bin`;
 const DATA_NAMES = `${import.meta.env.BASE_URL}data/named-stars.json`;
+const DATA_EXOPLANETS = `${import.meta.env.BASE_URL}data/exoplanets.json`;
+
+function planetDefsForStar(
+  exo: ExoplanetsPayload | null,
+  starName: string,
+): PlanetDef[] {
+  const list = exo?.byName[starName];
+  if (list && list.length > 0) return list;
+  if (starName === "Sol") return FALLBACK_SOL_PLANET_DEFS;
+  return [];
+}
 
 async function main(): Promise<void> {
   const app = document.getElementById("app");
@@ -40,32 +57,14 @@ async function main(): Promise<void> {
 
   let popularLabelGroup: Group | null = null;
 
-  const info = createInfoPanel(camera, app, {
-    getOriginCatalog: () => originCatalog,
-    onOriginSet: (x, y, z) => {
-      const dx = x - originCatalog.x;
-      const dy = y - originCatalog.y;
-      const dz = z - originCatalog.z;
-      originCatalog.set(x, y, z);
-      originGroup.position.set(-x, -y, -z);
-      camera.position.x -= dx;
-      camera.position.y -= dy;
-      camera.position.z -= dz;
-      controls.target.set(0, 0, 0);
-      controls.update();
-    },
-    onPopularLabelsChange: (visible) => {
-      if (popularLabelGroup) popularLabelGroup.visible = visible;
-    },
-  });
+  let exoplanetsPayload: ExoplanetsPayload | null = null;
 
   let starData;
   let named: NamedStarsPayload;
   try {
     starData = await loadStarBinary(DATA_BIN, loading.setProgress);
     named = await loadNamedStars(DATA_NAMES);
-    info.setStarCount(starData.count);
-    info.setNamedData(named);
+    exoplanetsPayload = await loadExoplanets(DATA_EXOPLANETS);
   } catch (e) {
     loading.remove();
     const err = document.createElement("div");
@@ -109,8 +108,39 @@ async function main(): Promise<void> {
     controls.update();
   }
 
-  const solPlanets = createSolPlanets(originCatalog, solPos);
-  originGroup.add(solPlanets.group);
+  const planetSystem = createPlanetSystem(
+    originCatalog,
+    solPos,
+    planetDefsForStar(exoplanetsPayload, "Sol"),
+    "Sol",
+  );
+  originGroup.add(planetSystem.group);
+
+  const info = createInfoPanel(camera, app, {
+    getOriginCatalog: () => originCatalog,
+    onOriginSet: (x, y, z, starName) => {
+      const dx = x - originCatalog.x;
+      const dy = y - originCatalog.y;
+      const dz = z - originCatalog.z;
+      originCatalog.set(x, y, z);
+      originGroup.position.set(-x, -y, -z);
+      camera.position.x -= dx;
+      camera.position.y -= dy;
+      camera.position.z -= dz;
+      controls.target.set(0, 0, 0);
+      controls.update();
+      planetSystem.setHost(
+        { x, y, z },
+        planetDefsForStar(exoplanetsPayload, starName),
+        starName,
+      );
+    },
+    onPopularLabelsChange: (visible) => {
+      if (popularLabelGroup) popularLabelGroup.visible = visible;
+    },
+  });
+  info.setStarCount(starData.count);
+  info.setNamedData(named);
 
   const popularStars = selectPopularNamedStars(named.named);
   const { group: labelBillboards, update: updateLabelBillboards } =
@@ -143,7 +173,7 @@ async function main(): Promise<void> {
 
     controls.update();
     updateStarPointSizeUniforms(material, camera, renderer);
-    solPlanets.update(camera);
+    planetSystem.update(camera);
     updateLabelBillboards(camera);
     info.tick();
     renderer.render(scene, camera);

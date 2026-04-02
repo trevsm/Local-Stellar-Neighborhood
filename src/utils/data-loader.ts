@@ -129,3 +129,27 @@ export async function loadNamedStars(url: string): Promise<NamedStarsPayload> {
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
   return res.json() as Promise<NamedStarsPayload>;
 }
+
+export type ExoplanetJsonPlanet = {
+  name: string;
+  semiMajorAxisAU: number;
+  color: string;
+};
+
+export type ExoplanetsPayload = {
+  matchPc: number;
+  byName: Record<string, ExoplanetJsonPlanet[]>;
+};
+
+/** Optional; returns null if missing or failed (app uses Solar System fallback). */
+export async function loadExoplanets(
+  url: string,
+): Promise<ExoplanetsPayload | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return res.json() as Promise<ExoplanetsPayload>;
+  } catch {
+    return null;
+  }
+}

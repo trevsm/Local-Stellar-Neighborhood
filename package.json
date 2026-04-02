@@ -9,7 +9,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "preview:pages": "GITHUB_REPOSITORY=trevsm/Local-Stellar-Neighborhood npm run build && vite preview",
-    "prepare-data": "tsx scripts/prepare-data.ts"
+    "prepare-data": "tsx scripts/prepare-data.ts && tsx scripts/prepare-exoplanets.ts",
+    "prepare-exoplanets": "tsx scripts/prepare-exoplanets.ts"
   },
   "dependencies": {
     "three": "^0.170.0"

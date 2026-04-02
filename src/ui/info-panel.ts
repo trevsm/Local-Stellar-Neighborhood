@@ -33,7 +33,7 @@ export function createInfoPanel(
   container: HTMLElement,
   options: {
     getOriginCatalog: () => Vector3;
-    onOriginSet: (x: number, y: number, z: number) => void;
+    onOriginSet: (x: number, y: number, z: number, starName: string) => void;
     onPopularLabelsChange?: (visible: boolean) => void;
   },
 ): {
@@ -326,7 +326,7 @@ export function createInfoPanel(
   function applyOrigin(star: NamedEntry): void {
     currentOriginName = star.name;
     originLine.textContent = `Origin: ${star.name}`;
-    options.onOriginSet(star.x, star.y, star.z);
+    options.onOriginSet(star.x, star.y, star.z, star.name);
   }
 
   setOriginBtn.addEventListener("click", () => {
