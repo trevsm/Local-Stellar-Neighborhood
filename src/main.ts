@@ -5,6 +5,7 @@ import {
   createStarPoints,
   updateStarPixelRatio,
   updateStarPointSizeUniforms,
+  updateStarPositionsRelative,
 } from "./stars.js";
 import {
   loadExoplanets,
@@ -12,6 +13,7 @@ import {
   loadStarBinary,
   type ExoplanetsPayload,
   type NamedStarsPayload,
+  type StarBuffers,
 } from "./utils/data-loader.js";
 import {
   createStarLabelBillboards,
@@ -59,7 +61,7 @@ async function main(): Promise<void> {
 
   let exoplanetsPayload: ExoplanetsPayload | null = null;
 
-  let starData;
+  let starData: StarBuffers;
   let named: NamedStarsPayload;
   try {
     starData = await loadStarBinary(DATA_BIN, loading.setProgress);
@@ -143,8 +145,7 @@ async function main(): Promise<void> {
   info.setNamedData(named);
 
   const popularStars = selectPopularNamedStars(named.named);
-  const { group: labelBillboards, update: updateLabelBillboards } =
-    createStarLabelBillboards(popularStars);
+  const { group: labelBillboards } = createStarLabelBillboards(popularStars);
   labelBillboards.visible = false;
   popularLabelGroup = labelBillboards;
   originGroup.add(labelBillboards);
@@ -172,11 +173,40 @@ async function main(): Promise<void> {
     requestAnimationFrame(animate);
 
     controls.update();
+
+    // Rewrite the star position buffer so every vertex is relative to the
+    // camera's catalog position.  JS does the subtraction in float64,
+    // so stars hundreds of parsecs from the origin stay rock-steady.
+    updateStarPositionsRelative(
+      points,
+      starData.positions,
+      starData.count,
+      originCatalog.x + camera.position.x,
+      originCatalog.y + camera.position.y,
+      originCatalog.z + camera.position.z,
+    );
+
     updateStarPointSizeUniforms(material, camera, renderer);
     planetSystem.update(camera);
-    updateLabelBillboards(camera);
     info.tick();
+
+    // Shift the scene so the camera renders from the world origin.
+    // This keeps modelViewMatrix translations small for Three.js objects
+    // (labels, planets) whose matrices are computed in CPU float64.
+    const cx = camera.position.x;
+    const cy = camera.position.y;
+    const cz = camera.position.z;
+    originGroup.position.x -= cx;
+    originGroup.position.y -= cy;
+    originGroup.position.z -= cz;
+    camera.position.set(0, 0, 0);
+
     renderer.render(scene, camera);
+
+    camera.position.set(cx, cy, cz);
+    originGroup.position.x += cx;
+    originGroup.position.y += cy;
+    originGroup.position.z += cz;
   }
 
   animate();

@@ -4,8 +4,6 @@ import {
   SRGBColorSpace,
   Sprite,
   SpriteMaterial,
-  Vector3,
-  type PerspectiveCamera,
 } from "three";
 import type { NamedStarsPayload } from "./utils/data-loader.js";
 
@@ -80,10 +78,7 @@ function createLabelTexture(text: string): {
   return { texture, aspect: w / h };
 }
 
-/** Same as planet labels — offset above anchor in screen space. */
-const LABEL_OFFSET_SCREEN_SCALE = 0.022;
-
-/** Same as planet `LABEL_SCALE` — sprite height in world units with sizeAttenuation off. */
+/** Sprite height in clip-space units (sizeAttenuation off). */
 const LABEL_SCALE = 0.024;
 
 /**
@@ -92,17 +87,12 @@ const LABEL_SCALE = 0.024;
  */
 export function createStarLabelBillboards(stars: NamedEntry[]): {
   group: Group;
-  update: (camera: PerspectiveCamera) => void;
   dispose: () => void;
 } {
   const group = new Group();
   group.name = "StarLabels";
   const textures: CanvasTexture[] = [];
   const materials: SpriteMaterial[] = [];
-  const labelAnchors: { anchor: Vector3; sprite: Sprite }[] = [];
-  const worldAnchor = new Vector3();
-  const worldLabel = new Vector3();
-  const screenUp = new Vector3();
 
   for (const s of stars) {
     const { texture, aspect } = createLabelTexture(s.name);
@@ -119,25 +109,8 @@ export function createStarLabelBillboards(stars: NamedEntry[]): {
     sprite.position.set(s.x, s.y, s.z);
     sprite.renderOrder = 11;
     sprite.scale.set(LABEL_SCALE * aspect, LABEL_SCALE, 1);
+    sprite.center.set(0.5, -1.0);
     group.add(sprite);
-    labelAnchors.push({
-      anchor: new Vector3(s.x, s.y, s.z),
-      sprite,
-    });
-  }
-
-  function update(camera: PerspectiveCamera): void {
-    const m = camera.matrixWorld.elements;
-    screenUp.set(m[4], m[5], m[6]).normalize();
-
-    for (const { anchor, sprite } of labelAnchors) {
-      worldAnchor.copy(anchor);
-      group.localToWorld(worldAnchor);
-      const camDist = camera.position.distanceTo(worldAnchor);
-      const off = LABEL_OFFSET_SCREEN_SCALE * camDist;
-      worldLabel.copy(worldAnchor).addScaledVector(screenUp, off);
-      group.worldToLocal(sprite.position.copy(worldLabel));
-    }
   }
 
   function dispose(): void {
@@ -145,5 +118,5 @@ export function createStarLabelBillboards(stars: NamedEntry[]): {
     for (const m of materials) m.dispose();
   }
 
-  return { group, update, dispose };
+  return { group, dispose };
 }

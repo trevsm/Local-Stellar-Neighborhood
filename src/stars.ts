@@ -102,6 +102,35 @@ export function updateStarPointSizeUniforms(
   material.uniforms.tanHalfFov!.value = Math.tan((camera.fov * Math.PI) / 360);
 }
 
+/**
+ * Rewrite the position buffer so every vertex is relative to `offset`
+ * (the camera's catalog-space position).  JavaScript performs the
+ * subtraction in float64, avoiding the catastrophic cancellation that
+ * float32 GPU math would introduce for stars far from the world origin.
+ *
+ * Also sets `points.position` to the same offset so the model matrix
+ * compensates and world-space positions remain correct.
+ */
+export function updateStarPositionsRelative(
+  points: Points,
+  originalPositions: Float32Array,
+  count: number,
+  offsetX: number,
+  offsetY: number,
+  offsetZ: number,
+): void {
+  const posAttr = points.geometry.getAttribute("position");
+  const arr = posAttr.array as Float32Array;
+  const n = count * 3;
+  for (let i = 0; i < n; i += 3) {
+    arr[i] = originalPositions[i]! - offsetX;
+    arr[i + 1] = originalPositions[i + 1]! - offsetY;
+    arr[i + 2] = originalPositions[i + 2]! - offsetZ;
+  }
+  posAttr.needsUpdate = true;
+  points.position.set(offsetX, offsetY, offsetZ);
+}
+
 /** Distance from infinite ray to point in world space */
 export function distanceRayToPoint(
   rayOrigin: Vector3,

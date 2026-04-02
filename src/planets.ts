@@ -23,9 +23,6 @@ const FADE_OUT_DIST = 0.008;
 
 const DOT_SCALE = 0.008;
 const LABEL_SCALE = 0.024;
-/** Label offset as a fraction of camera-to-planet distance — keeps text ~fixed pixels above the dot. */
-const LABEL_OFFSET_SCREEN_SCALE = 0.022;
-
 const GOLDEN_ANGLE = 2.39996322972865332;
 
 export interface PlanetDef {
@@ -177,11 +174,6 @@ export function createPlanetSystem(
   const orbitMats: LineBasicMaterial[] = [];
   const dotMats: SpriteMaterial[] = [];
   const labelMats: SpriteMaterial[] = [];
-  const planetPairs: { dot: Sprite; label: Sprite }[] = [];
-
-  const worldDot = new Vector3();
-  const worldLabel = new Vector3();
-  const screenUp = new Vector3();
 
   function clearVisuals(): void {
     while (group.children.length > 0) {
@@ -199,7 +191,6 @@ export function createPlanetSystem(
     orbitMats.length = 0;
     dotMats.length = 0;
     labelMats.length = 0;
-    planetPairs.length = 0;
   }
 
   function rebuild(): void {
@@ -234,9 +225,9 @@ export function createPlanetSystem(
 
       const { sprite: label, mat: lMat } = makeLabel(p.name);
       label.position.set(px, 0, pz);
+      label.center.set(0.5, -1.0);
       labelMats.push(lMat);
       group.add(label);
-      planetPairs.push({ dot, label });
     }
   }
 
@@ -254,16 +245,6 @@ export function createPlanetSystem(
     }
 
     group.visible = true;
-
-    const m = camera.matrixWorld.elements;
-    for (const { dot, label } of planetPairs) {
-      dot.getWorldPosition(worldDot);
-      const camDist = camera.position.distanceTo(worldDot);
-      const off = LABEL_OFFSET_SCREEN_SCALE * camDist;
-      screenUp.set(m[4], m[5], m[6]).normalize();
-      worldLabel.copy(worldDot).add(screenUp.multiplyScalar(off));
-      group.worldToLocal(label.position.copy(worldLabel));
-    }
 
     const t =
       dist < FULL_VIS_DIST
